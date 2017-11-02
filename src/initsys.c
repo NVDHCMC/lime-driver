@@ -15,6 +15,7 @@
 #include <initsys.h>
 #include <lime_mpacket.h>
 #include <lime_mdriver.h>
+#include <litve_adc.h>
 
 extern void _Error_Handler(void);
 /* Private typedef -----------------------------------------------------------*/
@@ -72,22 +73,26 @@ static void RCC_INIT(void)
 	HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 
 	/* Peripheral clocks enable */
-	/* GPIOs ------------------------------------------------- */
+	/* ADC ---------------------------------------------------*/
+	__HAL_RCC_ADC1_CLK_ENABLE();
+	/* GPIOs -------------------------------------------------*/
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 	__HAL_RCC_GPIOE_CLK_ENABLE();
 	__HAL_RCC_GPIOH_CLK_ENABLE();
-	/* Timers ------------------------------------------------ */
+	/* Timers ------------------------------------------------*/
 	__HAL_RCC_TIM1_CLK_ENABLE();
 	__HAL_RCC_TIM2_CLK_ENABLE();
 	__HAL_RCC_TIM3_CLK_ENABLE();
 	__HAL_RCC_TIM4_CLK_ENABLE();
 	__HAL_RCC_TIM5_CLK_ENABLE();
+	__HAL_RCC_TIM9_CLK_ENABLE();
 	__HAL_RCC_TIM10_CLK_ENABLE();
+	__HAL_RCC_TIM11_CLK_ENABLE();
 
-	/* SPI --------------------------------------------------- */
+	/* SPI ---------------------------------------------------*/
 	__HAL_RCC_SPI1_CLK_ENABLE();
 
 	/* USART2 ------------------------------------------------ */
@@ -170,6 +175,7 @@ __weak void EX7_PPP_INIT(void) {}
 
 /* Exported variable ---------------------------------------------------------*/
 initHandle_struct initHandles = {
+	ADC_INIT,
 	TIM1_INIT,
 	TIM2_INIT,
 	TIM3_INIT,
@@ -194,6 +200,18 @@ initHandle_struct initHandles = {
 };
 
 /* Exported functions --------------------------------------------------------*/
+/**
+  * @brief 	ADC_INIT: Initialized ADC peripheral
+  * @param 	none
+  * @retval none
+  *
+  * @notice unusable if not first initialized main data bus clock
+  */
+__weak void ADC_INIT(void)
+{
+
+}
+
 /**
   * @brief 	TIM1_INIT: Initialize TIM1 peripheral
   * @param 	none
@@ -328,7 +346,7 @@ __weak void USART2_INIT(void)
 LIME_Status LIME_INIT_SYSTEM(void)
 {
 	uint8_t status = LIME_OK;
-
+	initHandles.ADC_INIT();
 	initHandles.TIM1_INIT();
 	initHandles.TIM2_INIT();
 	initHandles.TIM3_INIT();

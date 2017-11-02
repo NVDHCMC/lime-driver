@@ -24,13 +24,13 @@
 
 /* Motor configuration --------------------------------- */
 #ifndef LIME_MDRIVER_1
-
+ /* Uncomment the line below to activate MDRIVER #1 */
 #define LIME_MDRIVER_1 			1
 #endif
 
 #ifndef LIME_MDRIVER_2
 /* Uncomment the line below to activate MDRIVER #2 */
-//#define LIME_MDRIVER_2 		2
+#define LIME_MDRIVER_2 		2
 #endif
 
 /* Exported types -------------------------------------- */
@@ -155,11 +155,14 @@ typedef struct
 /** @defgroup LIME_MDRIVER_1_Encoder_pins
   * @{
   */
-#define DRIVER1_ENCODER_TIMER 		TIM3
-#define DRIVER1_ENCODER_NVIC_IRQn 	TIM3_IRQn
+#define DRIVER1_ENCODER_TIMER 		TIM5
+#define DRIVER1_ENCODER_NVIC_IRQn 	TIM5_IRQn
 #define DRIVER1_ENCODER_PRIORITY	((uint32_t) 7)
-#define DRIVER1_ENCODER_PORT 		GPIOB
-#define DRIVER1_ENCODER_PINS 		(GPIO_PIN_4 | GPIO_PIN_5)
+#define DRIVER1_ENCODER_PORT1 		GPIOA
+#define DRIVER1_ENCODER_PIN1 		GPIO_PIN_0
+#define DRIVER1_ENCODER_PORT2 		GPIOA
+#define DRIVER1_ENCODER_PIN2 		GPIO_PIN_1
+#define DRIVER1_ENCODER_TIMER_AF 	GPIO_AF2_TIM5
 /**
   * @}
   */
@@ -167,9 +170,9 @@ typedef struct
 /** @defgroup LIME_MDRIVER_1_Dir_pins
   * @{
   */
-#define DRIVER1_LOGIC_PORT 			GPIOC
-#define DRIVER1_LOGIC_PIN_1 		GPIO_PIN_10
-#define DRIVER1_LOGIC_PIN_2 		GPIO_PIN_11
+#define DRIVER1_LOGIC_PORT 			GPIOB
+#define DRIVER1_LOGIC_PIN_1 		GPIO_PIN_13
+#define DRIVER1_LOGIC_PIN_2 		GPIO_PIN_14
 /**
   * @}
   */
@@ -177,81 +180,96 @@ typedef struct
 /** @defgroup LIME_MDRIVER_1_PWM_pins
   * @{
   */
-#define DRIVER1_STEP_TIMER 			TIM10
-#define DRIVER1_STEP_PORT 			GPIOB
-#define DRIVER1_STEP 				GPIO_PIN_8
+#define DRIVER1_STEP_TIMER 			TIM9
+#define DRIVER1_STEP_CHANNEL 		TIM_CHANNEL_2
+#define DRIVER1_STEP_PORT 			GPIOE
+#define DRIVER1_STEP 				GPIO_PIN_6
+#define DRIVER1_STEP_TIMER_AF 		GPIO_AF3_TIM9
 /**
   * @}
   */
+
+/* Exported macros -----------------------------------------------------*/
+#define DRIVE1_FWD() 				do {\
+										HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_1, GPIO_PIN_SET); \
+										HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_2, GPIO_PIN_RESET); \
+										} while(0U)
+#define DRIVE1_BWD() 				do {\
+										HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_1, GPIO_PIN_RESET); \
+										HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_2, GPIO_PIN_SET); \
+										} while(0U)
 
 /* Exported variable ---------------------------------------------------*/
 extern MDRIVE_Handles 				MDRIVE1;
 extern LIME_MPACKET_Type 			SERIAL_PACKAGE1;
 
 /* Exported functions --------------------------------------------------*/
-LIME_Status 						LIME_MDRIVE_INIT(void);
-LIME_Status 						LIME_MDRIVE_START(void);
-LIME_Status 						LIME_MDRIVE_MOTOR_UPDATE(void);
+LIME_Status 						LIME_MDRIVE1_INIT(void);
+LIME_Status 						LIME_MDRIVE1_START(void);
+LIME_Status 						LIME_MDRIVE1_MOTOR_UPDATE(void);
 #endif
 
 /* DRIVER 2 ------------------------------------------------------------*/
-#ifdef USE_DRIVER_2
-#define DRIVER2_SAMPLE_TIMER 		TIM5
-// Default encoder pins and port
-#define DRIVER2_ENCODER_TIMER 		TIM3
-#define DRIVER2_ENCODER_PORT 		GPIOB
-#define DRIVER2_ENCODER_PINS 		(GPIO_PIN_4 | GPIO_PIN_5)
-// Default logic port and pins
-#define DRIVER2_LOGIC_PORT 			GPIOD
-#define DRIVER2_LOGIC_PIN_1 		GPIO_PIN_5
-#define DRIVER2_LOGIC_PIN_2 		GPIO_PIN_6
-// Refer to the reference manual for correct port and pin of the according step timer
+#ifdef LIME_MDRIVER_2
+#define DRIVER2_SAMPLE_TIMER 		TIM2
+#define DRIVER2_SAMPLE_PORT 		GPIOA
+#define DRIVER2_SAMPLE_CHANNELS 	(GPIO_PIN_0 | GPIO_PIN_1)
+
+/** @defgroup LIME_MDRIVER_1_Encoder_pins
+  * @{
+  */
+#define DRIVER2_ENCODER_TIMER 		TIM2
+#define DRIVER2_ENCODER_NVIC_IRQn 	TIM2_IRQn
+#define DRIVER2_ENCODER_PRIORITY	((uint32_t) 7)
+#define DRIVER2_ENCODER_PORT1 		GPIOB
+#define DRIVER2_ENCODER_PIN1 		GPIO_PIN_3
+#define DRIVER2_ENCODER_PORT2 		GPIOA
+#define DRIVER2_ENCODER_PIN2 		GPIO_PIN_15
+#define DRIVER2_ENCODER_TIMER_AF 	GPIO_AF1_TIM2
+/**
+  * @}
+  */
+
+/** @defgroup LIME_MDRIVER_1_Dir_pins
+  * @{
+  */
+#define DRIVER2_LOGIC_PORT 			GPIOC
+#define DRIVER2_LOGIC_PIN_1 		GPIO_PIN_10
+#define DRIVER2_LOGIC_PIN_2 		GPIO_PIN_11
+/**
+  * @}
+  */
+
+/** @defgroup LIME_MDRIVER_1_PWM_pins
+  * @{
+  */
 #define DRIVER2_STEP_TIMER 			TIM10
+#define DRIVER2_STEP_CHANNEL 		TIM_CHANNEL_1
 #define DRIVER2_STEP_PORT 			GPIOB
 #define DRIVER2_STEP 				GPIO_PIN_8
-/* DRIVER 2 Timers --------------------------------------- */
-/* DRIVER2 Sampling timer - 32-bit timer */
-extern TIM_HandleTypeDef 			sampleTimer1Handle;
-/* DRIVER2 Encoder timer - 16-bit encoder */
-extern TIM_HandleTypeDef 			encoderTimer1Handle;
-/* DRIVER 1 Timer function prototype */
-void sampleTimer2_Init(void);
-void encoderTimer2_Init(void);
-void stepTimer2_Init(void);
+#define DRIVER2_STEP_TIMER_AF 		GPIO_AF3_TIM10
+/**
+  * @}
+  */
+
+/* Exported macros -----------------------------------------------------*/
+#define DRIVE2_FWD() 				do {\
+										HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_1, GPIO_PIN_SET); \
+										HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_2, GPIO_PIN_RESET); \
+										} while(0U)
+#define DRIVE2_BWD() 				do {\
+										HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_1, GPIO_PIN_RESET); \
+										HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_2, GPIO_PIN_SET); \
+										} while(0U)
+
+/* Exported variable ---------------------------------------------------*/
+extern MDRIVE_Handles 				MDRIVE2;
+
+/* Exported functions --------------------------------------------------*/
+LIME_Status 						LIME_MDRIVE2_INIT(void);
+LIME_Status 						LIME_MDRIVE2_START(void);
+LIME_Status 						LIME_MDRIVE2_MOTOR_UPDATE(void);
 #endif
-
-/* USART stuff -------------------------------------------- */
-/*extern uartMode_t 			uart2Mode;
-extern uartComHandle_t 		uart2ComHandle;
-extern UART_HandleTypeDef 	uart2Struct;*/
-// GPIO
-
-/* SPI stuff ---------------------------------------------- */
-//extern SPI_HandleTypeDef 	SPI1_Handle;
-
-/* User-defined functions and variables */
-/** @section 	Private functions
-  * @{
-  */
-/*motor_status 	encoder_read(motor_t *motor, TIM_HandleTypeDef *timHandle);
-void 			dec2hex(uint8_t* num, uint8_t len);
-uint32_t 		hex2dec(uint8_t *num, uint8_t len);*/
-/**
-  * @}
-  */
-
-/** @section 	Private variables
-  * @{
-  */
-/*extern motor_t 	motor1;
-uartComHandle_t uart2ComHandle;
-uint32_t 		timeout_counter;
-char 			*buffer;
-uint32_t 		temp1;
-uint32_t 		temp2;*/
-/**
-  * @}
-  */
 
 /* Exported functions ----------------------------------------*/
 LIME_Status 				LIME_MDRIVE_INIT(void);

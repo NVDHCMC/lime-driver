@@ -49,6 +49,7 @@ typedef enum
   */
 typedef struct
 {
+	void						(*ADC_INIT)(void);
 	void 						(*TIM1_INIT)(void);
 	void		 				(*TIM2_INIT)(void);
 	void		 				(*TIM3_INIT)(void);
@@ -76,10 +77,11 @@ typedef struct
   * @}
   */
 
-/* Exported variables --------------------------------------------------------- */
+/* Exported variables ---------------------------------------------------------*/
 extern initHandle_struct 		initHandles;
 
-/**/
+/* Exported function prototypes -----------------------------------------------*/
+void 					ADC_INIT(void);
 void 					TIM1_INIT(void);
 void 					TIM2_INIT(void);
 void 					TIM3_INIT(void);

@@ -40,6 +40,8 @@
 /* Private variables ---------------------------------------------------------*/
 osThreadId 		OPERATION_TaskHandle; 				/* Periodically blink LD15 to indicate operation */
 osThreadId 		SERIAL_COM_TaskHandle;				/* Serial communication task to communicate with the computer */
+osThreadId		PWM_UPDATE_TaskHandle;				/**/
+osThreadId 		ADC_READING_TaskHandle;				/**/
 
 /* Private function prototypes -----------------------------------------------*/
 void 			freertos_init(void);
@@ -60,7 +62,7 @@ void OPERATION_task(void const *argument)
 }
 
 /**
-  * @brief 	OPERATION_task: Serial communication task to communicate with the computer
+  * @brief 	SERIAL_COM_task : Serial communication task to communicate with the computer
   * @param 	argument
   * @retval none
   */
@@ -86,6 +88,40 @@ void SERIAL_COM_task(void const *argument)
 }
 
 /**
+  * @brief 	PWM_UPDATE_task : Periodically update PWM value.
+  * @param 	argument
+  * @retval none
+  */
+void PWM_UPDATE_task(void const *argument)
+{
+	for (;;)
+	{
+		MDRIVE1.PWMTimerHandle.Instance->CCR2 += 0x1000;
+		MDRIVE2.PWMTimerHandle.Instance->CCR1 += 0x1000;
+		DRIVE1_FWD();
+		DRIVE2_FWD();
+		osDelay(1000);
+		DRIVE1_BWD();
+		DRIVE2_BWD();
+		osDelay(1000);
+	}
+}
+
+/**
+  * @brief 	PWM_UPDATE_task : Serial communication task to communicate with the computer
+  * @param 	argument
+  * @retval none
+  */
+void ADC_READING_task(void const *argument)
+{
+	for (;;)
+	{
+
+		osDelay(10);
+	}
+}
+
+/**
   * @brief 	freertos_init function: Initialize all the tasks.
   * @param 	none
   * @retval none
@@ -99,6 +135,9 @@ void freertos_init(void)
 	osThreadDef(uart2Com,  SERIAL_COM_task, osPriorityNormal, 0, 200);
 	SERIAL_COM_TaskHandle 			= osThreadCreate(osThread(uart2Com), NULL);
 
-	//osThreadDef(pwmTest,   SERIAL_COM_task, osPriorityNormal, 0, 128);
-	//pwmTestTaskHandle 			= osThreadCreate(osThread(pwmTest), NULL);
+	osThreadDef(PWM_UPDATE, PWM_UPDATE_task, osPriorityHigh, 0, 128);
+	PWM_UPDATE_TaskHandle 		= osThreadCreate(osThread(PWM_UPDATE), NULL);
+
+	osThreadDef(ADC_READING, ADC_READING_task, osPriorityHigh, 0, 200);
+	ADC_READING_TaskHandle 	 	= osThreadCreate(osThread(ADC_READING), NULL);
 }

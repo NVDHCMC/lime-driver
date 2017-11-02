@@ -29,20 +29,28 @@ MDRIVE_Handles 					MDRIVE1 =
 	{0},
 	{0},
 	{0},
-	LIME_MDRIVE_INIT,
-	LIME_MDRIVE_START,
-	LIME_MDRIVE_MOTOR_UPDATE
+	LIME_MDRIVE1_INIT,
+	LIME_MDRIVE1_START,
+	LIME_MDRIVE1_MOTOR_UPDATE
 };
 LIME_MPACKET_Type 				SERIAL_PACKAGE1;
 #endif
 
 #ifdef LIME_MDRIVER_2
-MDRIVE_Handles 					MDRIVE2;
+MDRIVE_Handles 					MDRIVE2 =
+{
+	{0},
+	{0},
+	{0},
+	LIME_MDRIVE2_INIT,
+	LIME_MDRIVE2_START,
+	LIME_MDRIVE2_MOTOR_UPDATE
+};
 #endif
 
 /* Exported functions --------------------------------------------------------*/
 /**
-  * @brief 	MDRIVE1.ENCODER_INIT
+  * @brief 	MDRIVE1_ENCODER_INIT
   * @param
   * @retval LIME_Status
   */
@@ -92,13 +100,16 @@ void MDRIVE1_ENCODER_INIT(void)
 	/* CODE BEGINS Driver 1 encoder timer Msp_Init */
 	if (MDRIVE1.EncoderTimerHandle.Instance == DRIVER1_ENCODER_TIMER)
 	{
-		GPIO_InitStruct.Pin 	= DRIVER1_ENCODER_PINS;
+		GPIO_InitStruct.Pin 	= DRIVER1_ENCODER_PIN1;
 		GPIO_InitStruct.Mode 	= GPIO_MODE_AF_PP;
 		GPIO_InitStruct.Pull 	= GPIO_NOPULL;
 		GPIO_InitStruct.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
 		// This line also needs to be modified if there is a change in the motor's encoder timer
-		GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-		HAL_GPIO_Init(DRIVER1_ENCODER_PORT, &GPIO_InitStruct);
+		GPIO_InitStruct.Alternate = DRIVER1_ENCODER_TIMER_AF;
+		HAL_GPIO_Init(DRIVER1_ENCODER_PORT1, &GPIO_InitStruct);
+
+		GPIO_InitStruct.Pin 	= DRIVER1_ENCODER_PIN2;
+		HAL_GPIO_Init(DRIVER1_ENCODER_PORT2, &GPIO_InitStruct);
 	}
 
 	/* Init encoder's timer entry in NVIC table */
@@ -124,7 +135,7 @@ void MDRIVE1_PWM_INIT(void)
 	MDRIVE1.PWMTimerHandle.Instance 			= DRIVER1_STEP_TIMER;
 	MDRIVE1.PWMTimerHandle.Init.CounterMode 	= TIM_COUNTERMODE_UP;
 	MDRIVE1.PWMTimerHandle.Init.ClockDivision 	= TIM_CLOCKDIVISION_DIV1;
-	MDRIVE1.PWMTimerHandle.Init.Period 			= 0x7fff;
+	MDRIVE1.PWMTimerHandle.Init.Period 			= 0xffff;
 	MDRIVE1.PWMTimerHandle.Init.Prescaler 		= 0;
 	MDRIVE1.PWMTimerHandle.Init.RepetitionCounter = 1;
 
@@ -138,7 +149,7 @@ void MDRIVE1_PWM_INIT(void)
 	MDRIVE1_PWMTimerOCConfig.OCPolarity 	 	= TIM_OCPOLARITY_HIGH;
 	MDRIVE1_PWMTimerOCConfig.OCFastMode 		= TIM_OCFAST_DISABLE;
 
-	if (HAL_TIM_PWM_ConfigChannel(&MDRIVE1.PWMTimerHandle, &MDRIVE1_PWMTimerOCConfig, TIM_CHANNEL_1) != HAL_OK)
+	if (HAL_TIM_PWM_ConfigChannel(&MDRIVE1.PWMTimerHandle, &MDRIVE1_PWMTimerOCConfig, DRIVER1_STEP_CHANNEL) != HAL_OK)
 	{
 		_Error_Handler();
 	}
@@ -154,17 +165,17 @@ void MDRIVE1_PWM_INIT(void)
 	GPIO_Handle.Pull 	= GPIO_NOPULL;
 	GPIO_Handle.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
 	// In case of custom configuration, change this into appropriate GPIO pin mode.
-	GPIO_Handle.Alternate = GPIO_AF3_TIM10;
+	GPIO_Handle.Alternate = DRIVER1_STEP_TIMER_AF;
 	HAL_GPIO_Init(DRIVER1_STEP_PORT, &GPIO_Handle);
 #endif
 }
 
 /**
-  * @brief 	LIME_MDRIVE_INIT
+  * @brief 	LIME_MDRIVE1_INIT
   * @param
   * @retval LIME_Status
   */
-LIME_Status LIME_MDRIVE_INIT(void)
+LIME_Status LIME_MDRIVE1_INIT(void)
 {
 	uint8_t status = LIME_ERROR;
 
@@ -188,7 +199,178 @@ LIME_Status LIME_MDRIVE_INIT(void)
 	}
 	status 					= LIME_OK;
 #endif
+	return status;
+}
 
+/**
+  * @brief 	LIME_MDRIVE1_MOTOR_UPDATE
+  * @param
+  * @retval LIME_Status
+  */
+LIME_Status LIME_MDRIVE1_MOTOR_UPDATE(void)
+{
+	uint8_t status 			= LIME_ERROR;
+#ifdef LIME_MDRIVER_1
+	MDRIVE1.MOTOR.Encoder 	= MDRIVE1.EncoderTimerHandle.Instance->CNT;
+	status 					= LIME_OK;
+#endif
+	return status;
+}
+
+/**
+  * @brief 	LIME_MDRIVE1_START
+  * @param
+  * @retval LIME_Status
+  */
+LIME_Status LIME_MDRIVE1_START(void)
+{
+	uint8_t status 			= LIME_ERROR;
+#ifdef LIME_MDRIVER_1
+	/* Start the encoder pulse counter. */
+	HAL_TIM_Base_Start(&MDRIVE1.EncoderTimerHandle);
+	HAL_TIM_Encoder_Start(&MDRIVE1.EncoderTimerHandle, TIM_CHANNEL_1 | TIM_CHANNEL_2);
+
+	/* */
+	HAL_TIM_Base_Start_IT(&initHandles.TIM4_Handle);
+
+	/* Start the PWM generation. */
+	HAL_TIM_PWM_Start(&MDRIVE1.PWMTimerHandle, DRIVER1_STEP_CHANNEL);
+	/* Stop the motor. */
+	HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_1, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_2, GPIO_PIN_RESET);
+	status 					= LIME_OK;
+#endif
+	return status;
+}
+
+/**
+  * @brief 	MDRIVE2_ENCODER_INIT
+  * @param
+  * @retval LIME_Status
+  */
+void MDRIVE2_ENCODER_INIT(void)
+{
+#ifdef LIME_MDRIVER_2
+	TIM_Encoder_InitTypeDef 	MDRIVE2_EncoderTimerConfig;
+	/*
+	 *  CODE BEGINS
+	 *  Encoder timer initialization
+	 */
+	MDRIVE2.EncoderTimerHandle.Instance 			= DRIVER2_ENCODER_TIMER;
+	MDRIVE2.EncoderTimerHandle.Init.ClockDivision 	= TIM_CLOCKDIVISION_DIV1;
+	MDRIVE2.EncoderTimerHandle.Init.CounterMode 	= TIM_COUNTERMODE_UP;
+	MDRIVE2.EncoderTimerHandle.Init.Period 			= PULSE_PER_REV;
+	MDRIVE2.EncoderTimerHandle.Init.Prescaler		= 0;
+	MDRIVE2.EncoderTimerHandle.Channel 				= TIM_CHANNEL_1 | TIM_CHANNEL_2;
+	MDRIVE2_EncoderTimerConfig.EncoderMode 			= TIM_ENCODERMODE_TI12;
+	MDRIVE2_EncoderTimerConfig.IC1Filter 			= 0x07;
+	MDRIVE2_EncoderTimerConfig.IC1Polarity  		= TIM_ICPOLARITY_FALLING;
+	MDRIVE2_EncoderTimerConfig.IC1Prescaler 		= TIM_ICPSC_DIV1;
+	MDRIVE2_EncoderTimerConfig.IC1Selection 		= TIM_ICSELECTION_DIRECTTI;
+	MDRIVE2_EncoderTimerConfig.IC2Filter 			= 0x7;
+	MDRIVE2_EncoderTimerConfig.IC2Polarity 			= TIM_ICPOLARITY_FALLING;
+	MDRIVE2_EncoderTimerConfig.IC2Prescaler			= TIM_ICPSC_DIV1;
+	MDRIVE2_EncoderTimerConfig.IC2Selection 		= TIM_ICSELECTION_DIRECTTI;
+
+	if (HAL_TIM_Encoder_Init(&MDRIVE2.EncoderTimerHandle, &MDRIVE2_EncoderTimerConfig) != HAL_OK)
+	{
+		_Error_Handler();
+	}
+	/*
+	 * MDRIVER_2 Logic pins init
+	 */
+	GPIO_InitTypeDef GPIO_Handle;
+
+	GPIO_Handle.Pin 	= DRIVER2_LOGIC_PIN_1 | DRIVER2_LOGIC_PIN_2;
+	GPIO_Handle.Mode 	= GPIO_MODE_OUTPUT_PP;
+	GPIO_Handle.Pull 	= GPIO_NOPULL;
+	GPIO_Handle.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
+	HAL_GPIO_Init(DRIVER2_LOGIC_PORT, &GPIO_Handle);
+	/*
+	 * CODE ENDS
+	 * Sample timer initialization
+	 */
+	GPIO_InitTypeDef GPIO_InitStruct;
+	/* CODE BEGINS Driver 2 encoder timer Msp_Init */
+	if (MDRIVE2.EncoderTimerHandle.Instance == DRIVER2_ENCODER_TIMER)
+	{
+		GPIO_InitStruct.Pin 	= DRIVER2_ENCODER_PIN1;
+		GPIO_InitStruct.Mode 	= GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Pull 	= GPIO_NOPULL;
+		GPIO_InitStruct.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
+		// This line also needs to be modified if there is a change in the motor's encoder timer
+		GPIO_InitStruct.Alternate = DRIVER2_ENCODER_TIMER_AF;
+		HAL_GPIO_Init(DRIVER2_ENCODER_PORT1, &GPIO_InitStruct);
+
+		GPIO_InitStruct.Pin 	= DRIVER2_ENCODER_PIN2;
+		HAL_GPIO_Init(DRIVER2_ENCODER_PORT2, &GPIO_InitStruct);
+	}
+
+	/* Init encoder's timer entry in NVIC table */
+	HAL_NVIC_SetPriority(DRIVER2_ENCODER_NVIC_IRQn, DRIVER2_ENCODER_PRIORITY, 0);
+	HAL_NVIC_EnableIRQ(DRIVER2_ENCODER_NVIC_IRQn);
+	/* CODE ENDS Driver 2 encoder timer Msp_Init */
+#endif
+}
+/**
+  * @brief 	LIME_MDRIVE_INIT
+  * @param 	none
+  * @retval none
+  */
+void MDRIVE2_PWM_INIT(void)
+{
+#ifdef LIME_MDRIVER_2
+	/*
+	 * Timer configuration
+	 */
+	TIM_OC_InitTypeDef 	MDRIVE2_PWMTimerOCConfig;
+
+	MDRIVE2.PWMTimerHandle.Instance 			= DRIVER2_STEP_TIMER;
+	MDRIVE2.PWMTimerHandle.Init.CounterMode 	= TIM_COUNTERMODE_UP;
+	MDRIVE2.PWMTimerHandle.Init.ClockDivision 	= TIM_CLOCKDIVISION_DIV1;
+	MDRIVE2.PWMTimerHandle.Init.Period 			= 0xffff;
+	MDRIVE2.PWMTimerHandle.Init.Prescaler 		= 0;
+	MDRIVE2.PWMTimerHandle.Init.RepetitionCounter = 1;
+
+	if (HAL_TIM_PWM_Init(&MDRIVE2.PWMTimerHandle) != HAL_OK)
+	{
+		_Error_Handler();
+	}
+
+	MDRIVE2_PWMTimerOCConfig.OCMode 			= TIM_OCMODE_PWM1;
+	MDRIVE2_PWMTimerOCConfig.Pulse 				= 0;
+	MDRIVE2_PWMTimerOCConfig.OCPolarity 	 	= TIM_OCPOLARITY_HIGH;
+	MDRIVE2_PWMTimerOCConfig.OCFastMode 		= TIM_OCFAST_DISABLE;
+
+	if (HAL_TIM_PWM_ConfigChannel(&MDRIVE2.PWMTimerHandle, &MDRIVE2_PWMTimerOCConfig, DRIVER2_STEP_CHANNEL) != HAL_OK)
+	{
+		_Error_Handler();
+	}
+
+	/*
+	 * Timer MSP Initialization
+	 */
+
+	GPIO_InitTypeDef GPIO_Handle;
+
+	GPIO_Handle.Pin		= DRIVER2_STEP;
+	GPIO_Handle.Mode 	= GPIO_MODE_AF_PP;
+	GPIO_Handle.Pull 	= GPIO_NOPULL;
+	GPIO_Handle.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
+	// In case of custom configuration, change this into appropriate GPIO pin mode.
+	GPIO_Handle.Alternate = DRIVER2_STEP_TIMER_AF;
+	HAL_GPIO_Init(DRIVER2_STEP_PORT, &GPIO_Handle);
+#endif
+}
+
+/**
+  * @brief 	LIME_MDRIVE2_INIT
+  * @param  none
+  * @retval LIME_Status
+  */
+LIME_Status LIME_MDRIVE2_INIT(void)
+{
+	uint8_t status 			= LIME_ERROR;
 #ifdef LIME_MDRIVER_2
 	/* Init motor struct */
 	MDRIVE2.MOTOR.DRVStat 	&= (MDRIVE_StatusType) 0;
@@ -212,50 +394,31 @@ LIME_Status LIME_MDRIVE_INIT(void)
   * @param
   * @retval LIME_Status
   */
-LIME_Status LIME_MDRIVE_MOTOR_UPDATE(void)
+LIME_Status LIME_MDRIVE2_MOTOR_UPDATE(void)
 {
-	uint8_t status 			= LIME_OK;
-#ifdef LIME_MDRIVER_1
-	MDRIVE1.MOTOR.Encoder 	= MDRIVE1.EncoderTimerHandle.Instance->CNT;
-#endif
-
+	uint8_t status 			= LIME_ERROR;
 #ifdef LIME_MDRIVER_2
 	MDRIVE2.MOTOR.Encoder 	= MDRIVE2.EncoderTimerHandle.Instance->CNT;
+	status 					= LIME_OK;
 #endif
 	return status;
 }
 
 /**
-  * @brief 	LIME_MDRIVE_START
+  * @brief 	LIME_MDRIVE2_START
   * @param
   * @retval LIME_Status
   */
-LIME_Status LIME_MDRIVE_START(void)
+LIME_Status LIME_MDRIVE2_START(void)
 {
 	uint8_t status 			= LIME_ERROR;
-#ifdef LIME_MDRIVER_1
-	/* Start the encoder pulse counter. */
-	HAL_TIM_Base_Start(&MDRIVE1.EncoderTimerHandle);
-	HAL_TIM_Encoder_Start(&MDRIVE1.EncoderTimerHandle, TIM_CHANNEL_1 | TIM_CHANNEL_2);
-
-	/* */
-	HAL_TIM_Base_Start_IT(&initHandles.TIM4_Handle);
-
-	/* Start the PWM generation. */
-	HAL_TIM_PWM_Start(&MDRIVE1.PWMTimerHandle, TIM_CHANNEL_1);
-	/* Stop the motor. */
-	HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_1, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(DRIVER1_LOGIC_PORT, DRIVER1_LOGIC_PIN_2, GPIO_PIN_RESET);
-	status 					= LIME_OK;
-#endif
-
 #ifdef LIME_MDRIVER_2
 	/* Start the encoder pulse counter. */
 	HAL_TIM_Base_Start(&MDRIVE2.EncoderTimerHandle);
 	HAL_TIM_Encoder_Start(&MDRIVE2.EncoderTimerHandle, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
 	/* Start the PWM generation. */
-	HAL_TIM_PWM_Start(&MDRIVE2.PWMTimerHandle, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&MDRIVE2.PWMTimerHandle, DRIVER2_STEP_CHANNEL);
 	/* Stop the motor. */
 	HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_1, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(DRIVER2_LOGIC_PORT, DRIVER2_LOGIC_PIN_2, GPIO_PIN_RESET);

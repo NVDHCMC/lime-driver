@@ -351,15 +351,17 @@ int main(void)
 
 	/**/
 	MDRIVE1.MOTOR_INIT();
+	MDRIVE2.MOTOR_INIT();
 
 	/**/
 	LIME_INIT_SYSTEM();
 
 	/**/
-	L3GD20DRIVE.INIT();
+	//L3GD20DRIVE.INIT();
 
 	/**/
 	MDRIVE1.MOTOR_START();
+	MDRIVE2.MOTOR_START();
 
 	/* FreeRTOS task init */
 	freertos_init();

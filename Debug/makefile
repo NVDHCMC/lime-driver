@@ -32,13 +32,13 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: LIME_DRIVER_0.2.0.elf
+all: TRACKING_DRIVER_v0.1.elf
 
 # Tool invocations
-LIME_DRIVER_0.2.0.elf: $(OBJS) $(USER_OBJS) /home/azure/workspace1/LIME_DRIVER_0.2.0/LinkerScript.ld
+TRACKING_DRIVER_v0.1.elf: $(OBJS) $(USER_OBJS) /home/azure/workspace1/TRACKING_DRIVER_v0.1/LinkerScript.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -T"/home/azure/workspace1/LIME_DRIVER_0.2.0/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "LIME_DRIVER_0.2.0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -T"/home/azure/workspace1/TRACKING_DRIVER_v0.1/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "TRACKING_DRIVER_v0.1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
@@ -50,8 +50,8 @@ clean:
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
-	arm-none-eabi-objcopy -O binary "LIME_DRIVER_0.2.0.elf" "LIME_DRIVER_0.2.0.bin"
-	arm-none-eabi-size "LIME_DRIVER_0.2.0.elf"
+	arm-none-eabi-objcopy -O binary "TRACKING_DRIVER_v0.1.elf" "TRACKING_DRIVER_v0.1.bin"
+	arm-none-eabi-size "TRACKING_DRIVER_v0.1.elf"
 	-@echo ' '
 
 .PHONY: all clean dependents
