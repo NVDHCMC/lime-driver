@@ -63,6 +63,7 @@ src/freertos.o: ../src/freertos.c \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/lime_mdriver.h \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/lime_mpacket.h \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/lime_l3gd20.h \
+ /home/azure/workspace1/TRACKING_DRIVER_v0.1/LITVE_Library/include/litve_adc.h \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/FreeRTOS/include/FreeRTOS.h \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/FreeRTOSConfig.h \
  /home/azure/workspace1/TRACKING_DRIVER_v0.1/FreeRTOS/include/projdefs.h \
@@ -208,6 +209,8 @@ src/freertos.o: ../src/freertos.c \
 /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/lime_mpacket.h:
 
 /home/azure/workspace1/TRACKING_DRIVER_v0.1/inc/lime_l3gd20.h:
+
+/home/azure/workspace1/TRACKING_DRIVER_v0.1/LITVE_Library/include/litve_adc.h:
 
 /home/azure/workspace1/TRACKING_DRIVER_v0.1/FreeRTOS/include/FreeRTOS.h:
 

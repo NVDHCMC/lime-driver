@@ -75,6 +75,9 @@ static void RCC_INIT(void)
 	/* Peripheral clocks enable */
 	/* ADC ---------------------------------------------------*/
 	__HAL_RCC_ADC1_CLK_ENABLE();
+	/* DMA ---------------------------------------------------*/
+	__HAL_RCC_DMA1_CLK_ENABLE();
+	__HAL_RCC_DMA2_CLK_ENABLE();
 	/* GPIOs -------------------------------------------------*/
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
@@ -180,6 +183,7 @@ initHandle_struct initHandles = {
 	TIM2_INIT,
 	TIM3_INIT,
 	TIM4_INIT,
+	TIM5_INIT,
 	TIM10_INIT,
 	EX0_PPP_INIT,
 	EX1_PPP_INIT,
@@ -190,6 +194,7 @@ initHandle_struct initHandles = {
 	EX6_PPP_INIT,
 	EX7_PPP_INIT,
 	USART2_INIT,
+	{0},
 	{0},
 	{0},
 	{0},
@@ -221,7 +226,6 @@ __weak void ADC_INIT(void)
   */
 __weak void TIM1_INIT(void)
 {
-
 }
 
 /**
@@ -233,7 +237,7 @@ __weak void TIM1_INIT(void)
   */
 __weak void TIM2_INIT(void)
 {
-
+	initHandles.TIM2_Handle.Instance 			= TIM2;
 }
 
 /**
@@ -245,7 +249,7 @@ __weak void TIM2_INIT(void)
   */
 __weak void TIM3_INIT(void)
 {
-
+	initHandles.TIM3_Handle.Instance 			= TIM3;
 }
 
 /**
@@ -285,6 +289,18 @@ __weak void TIM4_INIT(void)
 	HAL_TIM_Base_Init(&initHandles.TIM4_Handle);
 	HAL_NVIC_SetPriority(TIM4_IRQn, TIM4_NVIC_PRIORITY, 0);
 	HAL_NVIC_EnableIRQ(TIM4_IRQn);
+}
+
+/**
+  * @brief 	TIM5_INIT: Initialized TIM5 peripheral
+  * @param 	none
+  * @retval none
+  *
+  * @notice unusable if not first initialized main data bus clock
+  */
+__weak void TIM5_INIT(void)
+{
+	initHandles.TIM5_Handle.Instance 			= TIM5;
 }
 
 /**

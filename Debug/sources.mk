@@ -20,6 +20,7 @@ FreeRTOS \
 FreeRTOS/portable/GCC/ARM_CM4F \
 FreeRTOS/portable/MemMang \
 HAL_Driver/Src \
+LITVE_Library/src \
 src \
 startup \
 

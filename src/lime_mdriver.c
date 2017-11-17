@@ -102,7 +102,7 @@ void MDRIVE1_ENCODER_INIT(void)
 	{
 		GPIO_InitStruct.Pin 	= DRIVER1_ENCODER_PIN1;
 		GPIO_InitStruct.Mode 	= GPIO_MODE_AF_PP;
-		GPIO_InitStruct.Pull 	= GPIO_NOPULL;
+		GPIO_InitStruct.Pull 	= GPIO_PULLUP;
 		GPIO_InitStruct.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
 		// This line also needs to be modified if there is a change in the motor's encoder timer
 		GPIO_InitStruct.Alternate = DRIVER1_ENCODER_TIMER_AF;
@@ -211,7 +211,18 @@ LIME_Status LIME_MDRIVE1_MOTOR_UPDATE(void)
 {
 	uint8_t status 			= LIME_ERROR;
 #ifdef LIME_MDRIVER_1
-	MDRIVE1.MOTOR.Encoder 	= MDRIVE1.EncoderTimerHandle.Instance->CNT;
+	uint32_t temp 			= MDRIVE1.EncoderTimerHandle.Instance->CNT;
+
+	if (temp > MDRIVE1.MOTOR.Encoder)
+	{
+		MDRIVE1.MOTOR.SpeedVal  = (temp - MDRIVE1.MOTOR.Encoder);
+	}
+	else
+	{
+		MDRIVE1.MOTOR.SpeedVal  = (MDRIVE1.MOTOR.Encoder - temp);
+	}
+
+	MDRIVE1.MOTOR.Encoder 	= temp;
 	status 					= LIME_OK;
 #endif
 	return status;
@@ -296,7 +307,7 @@ void MDRIVE2_ENCODER_INIT(void)
 	{
 		GPIO_InitStruct.Pin 	= DRIVER2_ENCODER_PIN1;
 		GPIO_InitStruct.Mode 	= GPIO_MODE_AF_PP;
-		GPIO_InitStruct.Pull 	= GPIO_NOPULL;
+		GPIO_InitStruct.Pull 	= GPIO_PULLUP;
 		GPIO_InitStruct.Speed 	= GPIO_SPEED_FREQ_VERY_HIGH;
 		// This line also needs to be modified if there is a change in the motor's encoder timer
 		GPIO_InitStruct.Alternate = DRIVER2_ENCODER_TIMER_AF;
@@ -398,7 +409,18 @@ LIME_Status LIME_MDRIVE2_MOTOR_UPDATE(void)
 {
 	uint8_t status 			= LIME_ERROR;
 #ifdef LIME_MDRIVER_2
-	MDRIVE2.MOTOR.Encoder 	= MDRIVE2.EncoderTimerHandle.Instance->CNT;
+	uint32_t temp 			= MDRIVE2.EncoderTimerHandle.Instance->CNT;
+
+	if (temp > MDRIVE2.MOTOR.Encoder)
+	{
+		MDRIVE2.MOTOR.SpeedVal  = (temp - MDRIVE2.MOTOR.Encoder);
+	}
+	else
+	{
+		MDRIVE2.MOTOR.SpeedVal  = (MDRIVE2.MOTOR.Encoder - temp);
+	}
+
+	MDRIVE2.MOTOR.Encoder 	= temp;
 	status 					= LIME_OK;
 #endif
 	return status;
@@ -425,4 +447,20 @@ LIME_Status LIME_MDRIVE2_START(void)
 	status 					= LIME_OK;
 #endif
 	return status;
+}
+
+// Temporal function
+void start_button_init(void)
+{
+	GPIO_InitTypeDef GPIO_Handle;
+
+	GPIO_Handle.Pin 		= GPIO_PIN_0;
+	GPIO_Handle.Mode 		= GPIO_MODE_IT_RISING;
+	GPIO_Handle.Pull 		= GPIO_PULLDOWN;
+	GPIO_Handle.Speed 		= GPIO_SPEED_FREQ_LOW;
+
+	HAL_GPIO_Init(GPIOB, &GPIO_Handle);
+
+	HAL_NVIC_SetPriority(EXTI0_IRQn, 8, 0);
+	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 }

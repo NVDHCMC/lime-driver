@@ -36,7 +36,7 @@
 /* Exported types -------------------------------------- */
 /* Basic driver types */
 typedef uint32_t 				SPDREF_Type;
-typedef uint16_t 				ENCODER_Type;
+typedef uint32_t 				ENCODER_Type;
 typedef uint32_t 				MDRIVE_BaseType;
 typedef uint8_t 				MDRIVE_StatusType;
 
@@ -110,7 +110,7 @@ typedef struct
  * 			+ Motor pulse per revolution
  */
 #define PERIPH_CLOCK_FREQ 			100000000
-#define PULSE_PER_REV 				300
+#define PULSE_PER_REV 				0xffffff
 
 /** @defgroup SAMPLE_Freq_Selection
   * @{

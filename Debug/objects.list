@@ -92,6 +92,7 @@
 "HAL_Driver/Src/stm32f4xx_ll_usart.o"
 "HAL_Driver/Src/stm32f4xx_ll_usb.o"
 "HAL_Driver/Src/stm32f4xx_ll_utils.o"
+"LITVE_Library/src/litve_adc.o"
 "src/freertos.o"
 "src/initsys.o"
 "src/lime_l3gd20.o"

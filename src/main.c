@@ -32,14 +32,16 @@
 #include <lime_mdriver.h>
 #include <lime_mpacket.h>
 #include <lime_l3gd20.h>
+#include <litve_adc.h>
 
 /* Private function prototypes -------------------------------------------------*/
 extern void 				freertos_init(void);
+extern void 				start_button_init(void);
 
 /* Private variables -----------------------------------------------------------*/
 //extern osThreadId 			OPERATION_TaskHandle; 				/* Periodically blink LD15 to indicate operation */
 extern osThreadId 			SERIAL_COM_TaskHandle;				/* Serial communication task to communicate with the computer */
-
+extern osThreadId 			ADC_READING_TaskHandle; 			/**/
 
 /* Exported functions --------------------------------------------------------*/
 /**
@@ -91,6 +93,16 @@ void _Error_Handler()
 @endverbatim
   * @{
   */
+/** @brief	ADC1 IRQ Handler function: handling ADC Interrupt Request
+  * @param 	none
+  * @retval none
+  *
+  * @notice unusable if not first initialized in NVIC.
+  */
+void ADC_IRQHandler(void)
+{
+	HAL_ADC_IRQHandler(&IRLF_ADC.ADC_Handle);
+}
 
 /** @brief	EXTI0 IRQ Handler function: handling External Interrupt Request line #0
   * @param 	none
@@ -101,7 +113,6 @@ void _Error_Handler()
 void EXTI0_IRQHandler(void)
 {
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 }
 
 /** @brief	USART2 IRQ Handler function: handling USART Interrupt Request line #2
@@ -121,10 +132,10 @@ void USART2_IRQHandler(void)
   *
   * @notice unusable if not first initialized in NVIC.
   */
-/*void TIM2_IRQHandler(void)
+void TIM2_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&sampleTimer1Handle);
-}*/
+	HAL_TIM_IRQHandler(&initHandles.TIM2_Handle);
+}
 
 /** @brief 	TIM3 IRQ Handler function: handling TIMER Interrupt Request device #3
   * @param 	none
@@ -132,10 +143,10 @@ void USART2_IRQHandler(void)
   *
   * @notice unusable if not first initialized in NVIC.
   */
-/*void TIM3_IRQHandler(void)
+void TIM3_IRQHandler(void)
 {
-	HAL_TIM_IRQHandler(&encoderTimer1Handle);
-}*/
+	HAL_TIM_IRQHandler(&initHandles.TIM3_Handle);
+}
 
 /** @brief 	TIM5 IRQ Handler function
   * @param 	none
@@ -156,7 +167,7 @@ void TIM4_IRQHandler(void)
   */
 void TIM5_IRQHandler(void)
 {
-	//HAL_TIM_IRQHandler(&sampleTimer1Handle); // Wrong timer
+	HAL_TIM_IRQHandler(&initHandles.TIM5_Handle);
 }
 
 /** @brief 	SPI1 IRQ Handler function: handling SPI Interrupt request line #1
@@ -194,6 +205,29 @@ void TIM5_IRQHandler(void)
 @endverbatim
   * @{
   */
+/** @brief	ADC1 IRQ Handler function: handling ADC Interrupt Request
+  * @param 	none
+  * @retval none
+  *
+  * @notice unusable if not first initialized in NVIC.
+  */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* ADC_Handle)
+{
+	IRLF_ADC.ADC_channel_value[0] 		=	HAL_ADC_GetValue(ADC_Handle);
+	osSignalSet(ADC_READING_TaskHandle, limeSignalList.sADC_DONE);
+}
+
+/** @brief 	HAL_GPIO_EXTI_Callback
+  * @param 	uint16_t GPIO_Pin
+  * @retval none
+  *
+  * @notice unusable if not first initialized in NVIC.
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	MDRIVE1.MOTOR.SpeedRef 		= 0x4000;
+	MDRIVE2.MOTOR.SpeedRef      = 0x4000;
+}
 
 /** @brief 	HAL_UART_TxCpltCallback
   * @param 	UART_HandleTypeDef
@@ -349,6 +383,9 @@ int main(void)
 	/* HAL Module Initializations */
 	HAL_Init();
 
+	initHandles.EX4_PPP_INIT = start_button_init;
+	initHandles.EX5_PPP_INIT = IRLF_ADC.ADC_INIT;
+	initHandles.EX6_PPP_INIT = IRLF_ADC.DMA_INIT;
 	/**/
 	MDRIVE1.MOTOR_INIT();
 	MDRIVE2.MOTOR_INIT();
